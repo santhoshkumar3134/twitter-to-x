@@ -1,0 +1,31 @@
+body
+{
+    background-image: linear-gradient(to right , rgb(235, 16, 187),rgb(29, 168, 223));
+}
+
+p
+{
+    font: size 6px; ;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: aqua;
+
+}
+.one
+{
+    display: flex;
+    margin: 20px;
+}
+.two
+{
+    display: flex;
+    margin: 20px;
+}
+.three
+{
+    display: flex;
+    margin: 20px;
+}
+button
+{
+    margin: 100px;
+}
