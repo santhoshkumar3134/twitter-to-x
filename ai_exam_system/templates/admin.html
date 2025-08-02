@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AI-Protected Exam System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .header h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .stats-icon.students {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stats-icon.alerts {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+        }
+        .stats-icon.active {
+            background: linear-gradient(135deg, #26de81 0%, #20bf6b 100%);
+            color: white;
+        }
+        .stats-icon.reports {
+            background: linear-gradient(135deg, #fed330 0%, #f7b731 100%);
+            color: white;
+        }
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+        .stats-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .content-card h5 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .table {
+            margin: 0;
+        }
+        .table th {
+            background: #f8f9fa;
+            border: none;
+            color: #666;
+            font-weight: 600;
+            padding: 1rem;
+        }
+        .table td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+        .table tbody tr {
+            border-bottom: 1px solid #e9ecef;
+        }
+        .table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .badge.status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge.status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge.status-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .alert-type {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .alert-type.face {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        .alert-type.object {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        .alert-type.gaze {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        .alert-type.audio {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .btn-view-report {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 20px;
+            padding: 0.5rem 1.5rem;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-view-report:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+        .refresh-btn:hover {
+            transform: scale(1.1);
+            color: white;
+        }
+        .timestamp {
+            font-size: 0.8rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2><i class="fas fa-shield-alt me-3"></i>AI-Protected Exam System</h2>
+                    <p class="mb-0 opacity-75">Admin Dashboard - Real-time Monitoring & Analytics</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="text-light">
+                        <i class="fas fa-clock me-2"></i>
+                        <span id="currentTime"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card text-center">
+                    <div class="stats-icon students mx-auto">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="stats-number">{{ students|length }}</h3>
+                    <p class="stats-label">Total Students</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card text-center">
+                    <div class="stats-icon alerts mx-auto">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3 class="stats-number">{{ alerts|length }}</h3>
+                    <p class="stats-label">Total Alerts</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card text-center">
+                    <div class="stats-icon active mx-auto">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h3 class="stats-number" id="activeStudents">0</h3>
+                    <p class="stats-label">Active Monitoring</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stats-card text-center">
+                    <div class="stats-icon reports mx-auto">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="stats-number">{{ students|length }}</h3>
+                    <p class="stats-label">Available Reports</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="content-card">
+            <h5><i class="fas fa-users me-2"></i>Student Sessions</h5>
+            <div class="table-responsive">
+                <table class="table" id="studentsTable">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Login Time</th>
+                            <th>Status</th>
+                            <th>Alert Count</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td><strong>{{ student[1] }}</strong></td>
+                            <td>{{ student[2] }}</td>
+                            <td class="timestamp">{{ student[3] }}</td>
+                            <td>
+                                {% if student[4] == 'logged_in' %}
+                                    <span class="badge status-active">
+                                        <i class="fas fa-circle me-1"></i>Active
+                                    </span>
+                                {% else %}
+                                    <span class="badge status-warning">
+                                        <i class="fas fa-pause me-1"></i>{{ student[4] }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-danger" id="alerts-{{ student[1] }}">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    {% set student_alerts = alerts|selectattr('1', 'equalto', student[1])|list %}
+                                    {{ student_alerts|length }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('student_report', student_id=student[1]) }}" 
+                                   class="btn btn-view-report btn-sm">
+                                    <i class="fas fa-chart-line me-1"></i>View Report
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Alerts -->
+        <div class="content-card">
+            <h5><i class="fas fa-bell me-2"></i>Recent Alerts</h5>
+            <div class="table-responsive">
+                <table class="table" id="alertsTable">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Student</th>
+                            <th>Type</th>
+                            <th>Message</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in alerts[:20] %}
+                        <tr>
+                            <td class="timestamp">{{ alert[2] }}</td>
+                            <td><strong>{{ alert[1] }}</strong></td>
+                            <td>
+                                {% if 'FACE' in alert[3] %}
+                                    <span class="alert-type face">Face Detection</span>
+                                {% elif 'OBJECT' in alert[3] %}
+                                    <span class="alert-type object">Object Detection</span>
+                                {% elif 'GAZE' in alert[3] %}
+                                    <span class="alert-type gaze">Gaze Tracking</span>
+                                {% elif 'AUDIO' in alert[3] %}
+                                    <span class="alert-type audio">Audio Detection</span>
+                                {% else %}
+                                    <span class="alert-type">Unknown</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ alert[4][:80] }}{% if alert[4]|length > 80 %}...{% endif %}</td>
+                            <td>
+                                {% if 'MULTIPLE' in alert[4] or 'SUSPICIOUS' in alert[4] %}
+                                    <span class="badge bg-danger">High</span>
+                                {% elif 'LOOKING AWAY' in alert[4] %}
+                                    <span class="badge bg-warning">Medium</span>
+                                {% else %}
+                                    <span class="badge bg-info">Low</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refresh Button -->
+    <button class="refresh-btn" onclick="refreshData()" title="Refresh Data">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTables
+            $('#studentsTable').DataTable({
+                pageLength: 10,
+                order: [[2, 'desc']], // Sort by login time
+                columnDefs: [
+                    { orderable: false, targets: [5] } // Disable sorting on Actions column
+                ]
+            });
+
+            $('#alertsTable').DataTable({
+                pageLength: 15,
+                order: [[0, 'desc']], // Sort by time
+                columnDefs: [
+                    { orderable: false, targets: [3] } // Disable sorting on Message column
+                ]
+            });
+        });
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString();
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        // Update time every second
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Calculate active students
+        function updateActiveStudents() {
+            const activeCount = document.querySelectorAll('.status-active').length;
+            document.getElementById('activeStudents').textContent = activeCount;
+        }
+
+        updateActiveStudents();
+
+        // Refresh data
+        function refreshData() {
+            const refreshBtn = document.querySelector('.refresh-btn i');
+            refreshBtn.classList.add('fa-spin');
+            
+            // Simulate refresh (in real implementation, this would fetch new data)
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            refreshData();
+        }, 30000);
+
+        // Add notification sound for new alerts (optional)
+        let lastAlertCount = {{ alerts|length }};
+        
+        function checkNewAlerts() {
+            // In a real implementation, this would fetch the current alert count
+            // and compare with lastAlertCount to detect new alerts
+        }
+
+        // Real-time updates simulation
+        function simulateRealTimeUpdates() {
+            // This would be replaced with WebSocket or SSE in production
+            const studentRows = document.querySelectorAll('#studentsTable tbody tr');
+            
+            studentRows.forEach(row => {
+                const alertBadge = row.querySelector('[id^="alerts-"]');
+                if (alertBadge && Math.random() < 0.1) { // 10% chance of update
+                    const currentCount = parseInt(alertBadge.textContent.trim());
+                    if (currentCount < 10) { // Don't let it grow too much in demo
+                        alertBadge.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i>${currentCount + 1}`;
+                        
+                        // Flash effect
+                        alertBadge.style.animation = 'none';
+                        setTimeout(() => {
+                            alertBadge.style.animation = 'pulse 0.5s';
+                        }, 10);
+                    }
+                }
+            });
+        }
+
+        // Run simulation every 10 seconds
+        setInterval(simulateRealTimeUpdates, 10000);
+
+        // Add pulse animation to CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Protected Online Exam - {{ student_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header h4 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .alert-panel {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .alert-count {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .webcam-container {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .webcam-feed {
+            width: 100%;
+            height: 240px;
+            border-radius: 10px;
+            border: 3px solid #28a745;
+            object-fit: cover;
+        }
+        .webcam-status {
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .exam-content {
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            min-height: 500px;
+        }
+        .question-header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        .question-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        .answer-option {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .answer-option:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        .answer-option input[type="radio"] {
+            margin-right: 0.75rem;
+            transform: scale(1.2);
+        }
+        .answer-option.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        .exam-timer {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #856404;
+        }
+        .btn-next {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+        .monitoring-status {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .monitoring-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .monitoring-item:last-child {
+            margin-bottom: 0;
+        }
+        .status-active {
+            color: #28a745;
+        }
+        .status-warning {
+            color: #ffc107;
+        }
+        .status-danger {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <h4><i class="fas fa-shield-alt me-2"></i>AI-Protected Exam</h4>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="exam-timer">
+                        <div class="timer-display" id="timer">02:00:00</div>
+                        <small>Time Remaining</small>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="me-3">{{ student_name }} ({{ student_id }})</span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>Exit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Left Sidebar - Monitoring -->
+            <div class="col-md-3">
+                <!-- Alert Counter -->
+                <div class="alert-panel text-center">
+                    <h6><i class="fas fa-exclamation-triangle text-warning me-2"></i>Alert Count</h6>
+                    <div class="alert-count" id="alertCount">0</div>
+                    <small class="text-muted">Suspicious activities detected</small>
+                </div>
+
+                <!-- Webcam Feed -->
+                <div class="webcam-container">
+                    <h6><i class="fas fa-video me-2"></i>Live Monitoring</h6>
+                    <img src="{{ url_for('video_feed') }}" class="webcam-feed" alt="Webcam Feed">
+                    <div class="webcam-status">
+                        <span class="status-indicator"></span>
+                        <small class="text-success">Camera Active</small>
+                    </div>
+                </div>
+
+                <!-- Monitoring Status -->
+                <div class="monitoring-status">
+                    <h6><i class="fas fa-eye me-2"></i>AI Monitoring</h6>
+                    <div class="monitoring-item">
+                        <span><i class="fas fa-user-friends me-2"></i>Face Detection</span>
+                        <i class="fas fa-check-circle status-active"></i>
+                    </div>
+                    <div class="monitoring-item">
+                        <span><i class="fas fa-mobile-alt me-2"></i>Object Detection</span>
+                        <i class="fas fa-check-circle status-active"></i>
+                    </div>
+                    <div class="monitoring-item">
+                        <span><i class="fas fa-eye me-2"></i>Gaze Tracking</span>
+                        <i class="fas fa-check-circle status-active"></i>
+                    </div>
+                    <div class="monitoring-item">
+                        <span><i class="fas fa-microphone me-2"></i>Audio Monitoring</span>
+                        <i class="fas fa-check-circle status-active"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content - Exam Questions -->
+            <div class="col-md-9">
+                <div class="exam-content">
+                    <div class="question-header">
+                        <div class="question-number">Question 1 of 20</div>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: 5%"></div>
+                        </div>
+                    </div>
+
+                    <div class="question-text">
+                        <h5>What is the primary purpose of artificial intelligence in online exam proctoring?</h5>
+                        <p class="text-muted">Select the most appropriate answer from the options below.</p>
+                    </div>
+
+                    <div class="answers">
+                        <div class="answer-option" onclick="selectAnswer(this, 'A')">
+                            <input type="radio" name="answer" value="A" id="answerA">
+                            <label for="answerA">To replace human proctors entirely and reduce costs</label>
+                        </div>
+                        <div class="answer-option" onclick="selectAnswer(this, 'B')">
+                            <input type="radio" name="answer" value="B" id="answerB">
+                            <label for="answerB">To enhance exam security by detecting suspicious behavior in real-time</label>
+                        </div>
+                        <div class="answer-option" onclick="selectAnswer(this, 'C')">
+                            <input type="radio" name="answer" value="C" id="answerC">
+                            <label for="answerC">To make exams more difficult for students</label>
+                        </div>
+                        <div class="answer-option" onclick="selectAnswer(this, 'D')">
+                            <input type="radio" name="answer" value="D" id="answerD">
+                            <label for="answerD">To collect personal data from students</label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button class="btn btn-outline-secondary" disabled>
+                            <i class="fas fa-chevron-left me-2"></i>Previous
+                        </button>
+                        <button class="btn btn-next" onclick="nextQuestion()">
+                            Next<i class="fas fa-chevron-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Timer functionality
+        let timeRemaining = 2 * 60 * 60; // 2 hours in seconds
+        
+        function updateTimer() {
+            const hours = Math.floor(timeRemaining / 3600);
+            const minutes = Math.floor((timeRemaining % 3600) / 60);
+            const seconds = timeRemaining % 60;
+            
+            const timerDisplay = document.getElementById('timer');
+            timerDisplay.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeRemaining <= 0) {
+                alert('Time is up! Submitting exam...');
+                // Auto-submit exam
+                window.location.href = '/logout';
+            }
+            
+            timeRemaining--;
+        }
+        
+        // Update timer every second
+        setInterval(updateTimer, 1000);
+        
+        // Alert count update
+        function updateAlertCount() {
+            fetch('/get_alert_count')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('alertCount').textContent = data.alert_count;
+                })
+                .catch(error => console.error('Error fetching alert count:', error));
+        }
+        
+        // Update alert count every 5 seconds
+        setInterval(updateAlertCount, 5000);
+        
+        // Answer selection
+        function selectAnswer(element, answer) {
+            // Remove selection from all options
+            document.querySelectorAll('.answer-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selection to clicked option
+            element.classList.add('selected');
+            
+            // Check the radio button
+            document.getElementById('answer' + answer).checked = true;
+        }
+        
+        // Next question
+        function nextQuestion() {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (!selectedAnswer) {
+                alert('Please select an answer before proceeding.');
+                return;
+            }
+            
+            // Here you would typically save the answer and load the next question
+            alert('Answer saved! Loading next question...');
+            // For demo purposes, we'll just show an alert
+        }
+        
+        // Prevent right-click and certain key combinations
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            // Prevent F12, Ctrl+Shift+I, Ctrl+U, etc.
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.ctrlKey && e.key === 'u') ||
+                (e.ctrlKey && e.key === 's')) {
+                e.preventDefault();
+                alert('This action is not allowed during the exam!');
+            }
+        });
+        
+        // Warn before leaving
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = 'Are you sure you want to leave the exam?';
+        });
+        
+        // Request fullscreen on load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+        
+        // Monitor fullscreen changes
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement) {
+                alert('Please return to fullscreen mode for the exam!');
+            }
+        });
+    </script>
+</body>
+</html>
