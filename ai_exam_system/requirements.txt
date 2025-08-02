@@ -1,0 +1,12 @@
+Flask==2.3.3
+opencv-python==4.8.1.78
+mediapipe==0.10.7
+ultralytics==8.0.196
+openai-whisper==20231117
+SpeechRecognition==3.10.0
+PyAudio==0.2.11
+numpy==1.24.3
+Pillow==10.0.1
+werkzeug==2.3.7
+jinja2==3.1.2
+reportlab==4.0.4

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Report - {{ student[2] }} ({{ student[1] }})</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .report-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .student-info {
+            border-left: 5px solid #667eea;
+            padding-left: 1.5rem;
+        }
+        .risk-score {
+            text-align: center;
+            padding: 2rem;
+        }
+        .risk-meter {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+        }
+        .risk-low {
+            background: linear-gradient(135deg, #26de81 0%, #20bf6b 100%);
+        }
+        .risk-medium {
+            background: linear-gradient(135deg, #fed330 0%, #f7b731 100%);
+        }
+        .risk-high {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+        .alert-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .alert-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.75rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 2rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -0.5rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid;
+            z-index: 1;
+        }
+        .timeline-item.face::before { border-color: #1565c0; }
+        .timeline-item.object::before { border-color: #ef6c00; }
+        .timeline-item.gaze::before { border-color: #7b1fa2; }
+        .timeline-item.audio::before { border-color: #2e7d32; }
+        .alert-card {
+            background: #f8f9fa;
+            border-left: 4px solid;
+            border-radius: 0 10px 10px 0;
+            padding: 1rem;
+        }
+        .alert-card.face { border-color: #1565c0; }
+        .alert-card.object { border-color: #ef6c00; }
+        .alert-card.gaze { border-color: #7b1fa2; }
+        .alert-card.audio { border-color: #2e7d32; }
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+        }
+        .alert-icon.face { background: #1565c0; }
+        .alert-icon.object { background: #ef6c00; }
+        .alert-icon.gaze { background: #7b1fa2; }
+        .alert-icon.audio { background: #2e7d32; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+        .recommendation {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+        .btn-download {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2><i class="fas fa-user-graduate me-3"></i>Student Exam Report</h2>
+                    <p class="mb-0 opacity-75">Detailed Analysis & Security Assessment</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('admin') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <!-- Student Information -->
+        <div class="report-card">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="student-info">
+                        <h3>{{ student[2] }}</h3>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-id-card me-2"></i>Student ID: <strong>{{ student[1] }}</strong>
+                        </p>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-clock me-2"></i>Login Time: {{ student[3] }}
+                        </p>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Status: 
+                            <span class="badge bg-{% if student[4] == 'logged_in' %}success{% else %}warning{% endif %}">
+                                {{ student[4].replace('_', ' ').title() }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="risk-score">
+                        {% set alert_count = alerts|length %}
+                        {% if alert_count == 0 %}
+                            <div class="risk-meter risk-low">{{ alert_count }}</div>
+                            <h5 class="text-success">Low Risk</h5>
+                        {% elif alert_count <= 5 %}
+                            <div class="risk-meter risk-medium">{{ alert_count }}</div>
+                            <h5 class="text-warning">Medium Risk</h5>
+                        {% else %}
+                            <div class="risk-meter risk-high">{{ alert_count }}</div>
+                            <h5 class="text-danger">High Risk</h5>
+                        {% endif %}
+                        <p class="text-muted">Total Alerts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="report-card">
+            <h5><i class="fas fa-chart-bar me-2"></i>Alert Statistics</h5>
+            <div class="stats-grid">
+                {% set face_alerts = alerts|selectattr('3', 'containing', 'FACE')|list %}
+                {% set object_alerts = alerts|selectattr('3', 'containing', 'OBJECT')|list %}
+                {% set gaze_alerts = alerts|selectattr('3', 'containing', 'GAZE')|list %}
+                {% set audio_alerts = alerts|selectattr('3', 'containing', 'AUDIO')|list %}
+                
+                <div class="stat-item">
+                    <div class="stat-number text-primary">{{ face_alerts|length }}</div>
+                    <div class="stat-label">Face Detection Alerts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number text-warning">{{ object_alerts|length }}</div>
+                    <div class="stat-label">Object Detection Alerts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" style="color: #7b1fa2;">{{ gaze_alerts|length }}</div>
+                    <div class="stat-label">Gaze Tracking Alerts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number text-success">{{ audio_alerts|length }}</div>
+                    <div class="stat-label">Audio Detection Alerts</div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="chart-container">
+                <canvas id="alertChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Alert Timeline -->
+        <div class="report-card">
+            <h5><i class="fas fa-history me-2"></i>Alert Timeline</h5>
+            {% if alerts %}
+                <div class="alert-timeline">
+                    {% for alert in alerts %}
+                    <div class="timeline-item {% if 'FACE' in alert[3] %}face{% elif 'OBJECT' in alert[3] %}object{% elif 'GAZE' in alert[3] %}gaze{% elif 'AUDIO' in alert[3] %}audio{% endif %}">
+                        <div class="alert-card {% if 'FACE' in alert[3] %}face{% elif 'OBJECT' in alert[3] %}object{% elif 'GAZE' in alert[3] %}gaze{% elif 'AUDIO' in alert[3] %}audio{% endif %}">
+                            <div class="d-flex align-items-start">
+                                <div class="alert-icon {% if 'FACE' in alert[3] %}face{% elif 'OBJECT' in alert[3] %}object{% elif 'GAZE' in alert[3] %}gaze{% elif 'AUDIO' in alert[3] %}audio{% endif %}">
+                                    {% if 'FACE' in alert[3] %}
+                                        <i class="fas fa-user"></i>
+                                    {% elif 'OBJECT' in alert[3] %}
+                                        <i class="fas fa-mobile-alt"></i>
+                                    {% elif 'GAZE' in alert[3] %}
+                                        <i class="fas fa-eye"></i>
+                                    {% elif 'AUDIO' in alert[3] %}
+                                        <i class="fas fa-microphone"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">
+                                            {% if 'FACE' in alert[3] %}
+                                                Face Detection Alert
+                                            {% elif 'OBJECT' in alert[3] %}
+                                                Object Detection Alert
+                                            {% elif 'GAZE' in alert[3] %}
+                                                Gaze Tracking Alert
+                                            {% elif 'AUDIO' in alert[3] %}
+                                                Audio Detection Alert
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">{{ alert[2] }}</small>
+                                    </div>
+                                    <p class="mb-0">{{ alert[4] }}</p>
+                                    {% if alert[5] %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-image me-1"></i>Screenshot saved
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 text-success">No Alerts Detected</h4>
+                    <p class="text-muted">This student completed the exam without any security violations.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recommendations -->
+        <div class="report-card">
+            <h5><i class="fas fa-lightbulb me-2"></i>Assessment & Recommendations</h5>
+            <div class="recommendation">
+                {% set alert_count = alerts|length %}
+                {% if alert_count == 0 %}
+                    <h6 class="text-success"><i class="fas fa-thumbs-up me-2"></i>Excellent Performance</h6>
+                    <p class="mb-0">This student demonstrated excellent exam conduct with no security violations detected. The exam was completed under proper supervision with all monitoring systems confirming legitimate behavior throughout the session.</p>
+                {% elif alert_count <= 2 %}
+                    <h6 class="text-info"><i class="fas fa-info-circle me-2"></i>Minor Concerns</h6>
+                    <p class="mb-0">A few minor alerts were detected during the exam. These could be due to environmental factors or brief moments of distraction. Overall performance suggests legitimate exam behavior with minimal risk.</p>
+                {% elif alert_count <= 5 %}
+                    <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Moderate Risk</h6>
+                    <p class="mb-0">Several alerts were triggered during the exam session. While this could indicate potential cheating behavior, it may also result from environmental factors or technical issues. Manual review of the exam session is recommended.</p>
+                {% else %}
+                    <h6 class="text-danger"><i class="fas fa-ban me-2"></i>High Risk - Investigation Required</h6>
+                    <p class="mb-0">Multiple security alerts were detected throughout the exam session. This pattern strongly suggests potential academic misconduct. Immediate investigation is required, including review of all screenshots and audio recordings. Consider invalidating the exam results pending investigation.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="report-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6>Export Options</h6>
+                    <p class="text-muted mb-0">Download this report for record keeping</p>
+                </div>
+                <div>
+                    <button class="btn btn-download me-2" onclick="downloadPDF()">
+                        <i class="fas fa-file-pdf me-2"></i>Download PDF
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Print Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <script>
+        // Create alert distribution chart
+        const ctx = document.getElementById('alertChart').getContext('2d');
+        const alertChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Face Detection', 'Object Detection', 'Gaze Tracking', 'Audio Detection'],
+                datasets: [{
+                    data: [
+                        {{ face_alerts|length }},
+                        {{ object_alerts|length }},
+                        {{ gaze_alerts|length }},
+                        {{ audio_alerts|length }}
+                    ],
+                    backgroundColor: [
+                        '#1565c0',
+                        '#ef6c00',
+                        '#7b1fa2',
+                        '#2e7d32'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Download PDF function
+        function downloadPDF() {
+            // In a real implementation, this would generate a PDF server-side
+            alert('PDF download functionality would be implemented here.\nThis would generate a comprehensive PDF report with all alert details and screenshots.');
+        }
+
+        // Print styles
+        const printStyles = `
+            @media print {
+                .btn, .header { display: none !important; }
+                .report-card { break-inside: avoid; }
+                body { background: white !important; }
+            }
+        `;
+        
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = printStyles;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+</html>
